@@ -4,9 +4,12 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/EyuAtske/Agrregator/internal/commands"
 	"github.com/EyuAtske/Agrregator/internal/config"
 )
+
+type state struct{
+	cofg *config.Config
+}
 
 func main() {
 	cfg, err := config.Read()
@@ -14,11 +17,11 @@ func main() {
 		fmt.Println("Unable to read config")
 		return
 	}
-	state := commands.State{Cofg: cfg}
-	cmds := commands.Commands{
-		Handlers: make(map[string]func(*commands.State, commands.Command) error),
+	st := state{cofg: cfg}
+	cmds := commands{
+		Handlers: make(map[string]func(*state, command) error),
 	}
-	cmds.Register("login", commands.HandlerLogin)
+	cmds.register("login", handlerLogin)
 	args := os.Args
 	if len(args) == 1 {
 		fmt.Println("not enough arguments were provided")
@@ -28,7 +31,7 @@ func main() {
 		fmt.Println("a username is required")
 		os.Exit(1)
 	}
-	cmd := commands.Command{Name: args[1], Args: args[2:]}
-	commands.HandlerLogin(&state, cmd)
-	err = cmds.Run(&state, cmd)
+	cmd := command{Name: args[1], Args: args[2:]}
+	handlerLogin(&st, cmd)
+	err = cmds.run(&st, cmd)
 }

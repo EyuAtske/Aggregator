@@ -1,29 +1,26 @@
-package commands
+package main
 
 import (
 	"fmt"
 
-	"github.com/EyuAtske/Agrregator/internal/config"
 )
 
-type State struct{
-	Cofg *config.Config
-}
 
-type Command struct{
+
+type command struct{
 	Name string
 	Args []string
 }
 
-type Commands struct{
-	Handlers map[string]func(*State, Command) error
+type commands struct{
+	Handlers map[string]func(*state, command) error
 }
 
-func HandlerLogin(s *State, cmd Command) error{
+func handlerLogin(s *state, cmd command) error{
 	if len(cmd.Args) < 1 {
 		return fmt.Errorf("the login handler expects a single argument, the username")
 	}
-	err := s.Cofg.SetUser(cmd.Args[0])
+	err := s.cofg.SetUser(cmd.Args[0])
 	if err != nil {
 		return fmt.Errorf("unable to set user: %w", err)
 	}
@@ -31,7 +28,7 @@ func HandlerLogin(s *State, cmd Command) error{
 	return nil
 }
 
-func (c *Commands) Run(s *State, cmd Command) error{
+func (c *commands) run(s *state, cmd command) error{
 	handler, ok := c.Handlers[cmd.Name]
 	if !ok {
 		return fmt.Errorf("command not found: %s", cmd.Name)
@@ -39,6 +36,6 @@ func (c *Commands) Run(s *State, cmd Command) error{
 	return handler(s, cmd)
 }
 
-func (c *Commands) Register(name string, f func(*State, Command) error){
+func (c *commands) register(name string, f func(*state, command) error){
 	c.Handlers[name] = f
 }
