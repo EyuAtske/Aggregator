@@ -1,27 +1,40 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"os"
 
 	"github.com/EyuAtske/Agrregator/internal/config"
+	"github.com/EyuAtske/Agrregator/internal/database"
+	_ "github.com/lib/pq"
 )
 
-type state struct{
-	cofg *config.Config
+type state struct {
+	db  *database.Queries
+	cfg *config.Config
 }
 
 func main() {
+	db, err := sql.Open("postgres", "postgres://postgres:datapost@localhost:5432/gator")
+	if err != nil {
+		fmt.Println("Unable to connect to database")
+		return
+	}
+	defer db.Close()
+	dbQueries := database.New(db)
+
 	cfg, err := config.Read()
 	if err != nil {
 		fmt.Println("Unable to read config")
 		return
 	}
-	st := state{cofg: cfg}
+	st := state{db: dbQueries, cfg: cfg}
 	cmds := commands{
 		Handlers: make(map[string]func(*state, command) error),
 	}
 	cmds.register("login", handlerLogin)
+	cmds.register("register", handlerRegister)
 	args := os.Args
 	if len(args) == 1 {
 		fmt.Println("not enough arguments were provided")
