@@ -2,10 +2,7 @@ package main
 
 import (
 	"fmt"
-
 )
-
-
 
 type command struct{
 	Name string

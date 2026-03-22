@@ -32,6 +32,9 @@ func main() {
 		os.Exit(1)
 	}
 	cmd := command{Name: args[1], Args: args[2:]}
-	handlerLogin(&st, cmd)
 	err = cmds.run(&st, cmd)
+	if err != nil {
+		fmt.Printf("Error executing command: %v\n", err)
+		os.Exit(1)
+	}
 }
