@@ -16,7 +16,7 @@ type state struct {
 }
 
 func main() {
-	db, err := sql.Open("postgres", "postgres://postgres:datapost@localhost:5432/gator")
+	db, err := sql.Open("postgres", "postgres://postgres:datapost@localhost:5432/gator?sslmode=disable")
 	if err != nil {
 		fmt.Println("Unable to connect to database")
 		return
@@ -35,16 +35,31 @@ func main() {
 	}
 	cmds.register("login", handlerLogin)
 	cmds.register("register", handlerRegister)
+	// for admins
+	cmds.register("reset", handlerReset)
+	cmds.register("users", handlerUsers)
+	cmds.register("agg", handlerFetch)
 	args := os.Args
+	cmd := command{}
 	if len(args) == 1 {
 		fmt.Println("not enough arguments were provided")
 		os.Exit(1)
 	}
 	if len(args) == 2 {
-		fmt.Println("a username is required")
-		os.Exit(1)
+		switch args[1] {
+		case "reset":
+			cmd = command{Name: args[1], Args: nil}
+		case "users":
+			cmd = command{Name: args[1], Args: nil}
+		case "agg":
+			cmd = command{Name: args[1], Args: nil}
+		default:
+			fmt.Println("a username is required")
+			os.Exit(1)
+		}
+	}else{
+		cmd = command{Name: args[1], Args: args[2:]}
 	}
-	cmd := command{Name: args[1], Args: args[2:]}
 	err = cmds.run(&st, cmd)
 	if err != nil {
 		fmt.Printf("Error executing command: %v\n", err)

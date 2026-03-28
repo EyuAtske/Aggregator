@@ -62,6 +62,47 @@ func handlerRegister(s *state, cmd command) error{
 	fmt.Println("User was created")
 	return nil
 }
+
+func handlerReset(s *state, cmd command) error{
+	err := s.db.DeleteUsers(context.Background())
+	if err != nil{
+		fmt.Println("Unable to reset users: %w", err)
+		os.Exit(1)
+	}
+	return nil
+}
+
+func handlerUsers(s *state, cmd command) error{
+	users, err := s.db.GetUsers(context.Background())
+	if err != nil{
+		fmt.Println("Unable to fetch users: %w", err)
+		os.Exit(1)
+	}
+	for _, user := range users {
+		if user.Name == s.cfg.CurrentUserName {
+			fmt.Printf("%s (current)\n", user.Name)
+			continue
+		}
+		fmt.Println(user.Name)
+	}
+	
+	return nil
+}
+
+func handlerFetch(s *state, cmd command) error{
+	feed, err := fetchFeed(context.Background(), "https://www.wagslane.dev/index.xml")
+	if err != nil {
+		return fmt.Errorf("unable to fetch feed: %w", err)
+	}
+	for _, item := range feed.Channel.Item {
+		fmt.Printf("- %s\n", item.Title)
+		fmt.Printf("  Link: %s\n", item.Link)
+		fmt.Printf("  Description: %s\n", item.Description)
+		fmt.Printf("  Published: %s\n", item.PubDate)
+	}
+	return nil
+}
+
 func (c *commands) run(s *state, cmd command) error{
 	handler, ok := c.Handlers[cmd.Name]
 	if !ok {
