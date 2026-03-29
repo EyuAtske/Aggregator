@@ -114,12 +114,12 @@ func handlerAddFeed(s *state, cmd command) error{
 		return fmt.Errorf("unable to fetch user: %w", err)
 	}
 	s.db.CreateFeed(context.Background(), database.CreateFeedParams{
-		user.ID,
-		user.CreatedAt,
-		user.UpdatedAt,
-		name,
-		url,
-		user.ID,
+		ID:        user.ID,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+		Name:      name,
+		Url:       url,
+		UserID:    user.ID,
 	})
 	return nil
 }
