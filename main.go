@@ -39,6 +39,7 @@ func main() {
 	cmds.register("reset", handlerReset)
 	cmds.register("users", handlerUsers)
 	cmds.register("agg", handlerFetch)
+	cmds.register("addfeed", handlerAddFeed)
 	args := os.Args
 	cmd := command{}
 	if len(args) == 1 {
@@ -54,7 +55,7 @@ func main() {
 		case "agg":
 			cmd = command{Name: args[1], Args: nil}
 		default:
-			fmt.Println("a username is required")
+			fmt.Println("a second argument is required")
 			os.Exit(1)
 		}
 	}else{

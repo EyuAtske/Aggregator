@@ -103,6 +103,27 @@ func handlerFetch(s *state, cmd command) error{
 	return nil
 }
 
+func handlerAddFeed(s *state, cmd command) error{
+	if len(cmd.Args) < 2 {
+		return fmt.Errorf("the addfeed handler expects two arguments, the feed name and the feed url")
+	}
+	name := cmd.Args[0]
+	url := cmd.Args[1]
+	user, err := s.db.GetUser(context.Background(), s.cfg.CurrentUserName)
+	if err != nil {
+		return fmt.Errorf("unable to fetch user: %w", err)
+	}
+	s.db.CreateFeed(context.Background(), database.CreateFeedParams{
+		user.ID,
+		user.CreatedAt,
+		user.UpdatedAt,
+		name,
+		url,
+		user.ID,
+	})
+	return nil
+}
+
 func (c *commands) run(s *state, cmd command) error{
 	handler, ok := c.Handlers[cmd.Name]
 	if !ok {
