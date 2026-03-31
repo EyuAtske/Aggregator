@@ -40,6 +40,9 @@ func main() {
 	cmds.register("users", handlerUsers)
 	cmds.register("agg", handlerFetch)
 	cmds.register("addfeed", handlerAddFeed)
+	cmds.register("feeds", handlerFeeds)
+	cmds.register("follow", handlerFollow)
+	cmds.register("following", handlerFollowing)
 	args := os.Args
 	cmd := command{}
 	if len(args) == 1 {
@@ -53,6 +56,10 @@ func main() {
 		case "users":
 			cmd = command{Name: args[1], Args: nil}
 		case "agg":
+			cmd = command{Name: args[1], Args: nil}
+		case "feeds":
+			cmd = command{Name: args[1], Args: nil}
+		case "following":
 			cmd = command{Name: args[1], Args: nil}
 		default:
 			fmt.Println("a second argument is required")
