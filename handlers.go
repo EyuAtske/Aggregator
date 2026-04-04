@@ -3,8 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
-	"time"
 	"os"
+	"strconv"
+	"time"
 
 	"github.com/EyuAtske/Agrregator/internal/database"
 	"github.com/google/uuid"
@@ -81,17 +82,18 @@ func handlerUsers(s *state, cmd command) error{
 }
 
 func handlerFetch(s *state, cmd command) error{
-	feed, err := fetchFeed(context.Background(), "https://www.wagslane.dev/index.xml")
+	if len(cmd.Args) < 1 {
+		return fmt.Errorf("the agg handler expects a single argument, time_between_reqs 1s, 1m or 1h")
+	}
+	timeBetweenReqs, err := time.ParseDuration(cmd.Args[0])
 	if err != nil {
-		return fmt.Errorf("unable to fetch feed: %w", err)
+		return fmt.Errorf("unable to parse time duration: %w", err)
 	}
-	for _, item := range feed.Channel.Item {
-		fmt.Printf("- %s\n", item.Title)
-		fmt.Printf("  Link: %s\n", item.Link)
-		fmt.Printf("  Description: %s\n", item.Description)
-		fmt.Printf("  Published: %s\n", item.PubDate)
+	fmt.Printf("Collecting feeds every %s\n", cmd.Args[0])
+	ticker := time.NewTicker(time.Duration(timeBetweenReqs))
+	for ; ; <-ticker.C {
+		scrapeFeeds(s)
 	}
-	return nil
 }
 
 func handlerAddFeed(s *state, cmd command, user database.User) error{
@@ -171,5 +173,55 @@ func handlerFollowing(s *state, cmd command, user database.User) error{
 	for _, feed := range feeds {
 		fmt.Printf("- %s\n", feed.FeedName)
 	}
+	return nil
+}
+
+func handlerUnfollow(s *state, cmd command, user database.User) error{
+	if len(cmd.Args) < 1 {
+		return fmt.Errorf("the unfollow handler expects a single argument, the feed url")
+	}
+	feed_url := cmd.Args[0]
+	feed, err := s.db.GetFeedByUrl(context.Background(), feed_url)
+	if err != nil {
+		return fmt.Errorf("unable to fetch feed: %w", err)
+	}
+	err = s.db.UnfollowFeed(context.Background(), database.UnfollowFeedParams{
+			UserID: user.ID,
+			FeedID: feed.ID,
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("unable to unfollow feed: %w", err)
+	}
+	return nil
+}
+
+func handlerBrowse(s *state, cmd command, user database.User) error {
+	limit := 2
+	if cmd.Args != nil {
+		if specifiedLimit, err := strconv.Atoi(cmd.Args[0]); err == nil {
+			limit = specifiedLimit
+		} else {
+			return fmt.Errorf("invalid limit: %w", err)
+		}
+	}
+
+	posts, err := s.db.GetPostsForUser(context.Background(), database.GetPostsForUserParams{
+		UserID: user.ID,
+		Limit:  int32(limit),
+	})
+	if err != nil {
+		return fmt.Errorf("couldn't get posts for user: %w", err)
+	}
+
+	fmt.Printf("Found %d posts for user %s:\n", len(posts), user.Name)
+	for _, post := range posts {
+		fmt.Printf("%s from %s\n", post.PublishedAt.Time.Format("Mon Jan 2"), post.FeedName)
+		fmt.Printf("--- %s ---\n", post.Title)
+		fmt.Printf("    %v\n", post.Description.String)
+		fmt.Printf("Link: %s\n", post.Url)
+		fmt.Println("=====================================")
+	}
+
 	return nil
 }
